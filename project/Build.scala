@@ -56,7 +56,8 @@ object ProjectBuild extends Build {
       "com.jcabi" % "jcabi-log" % "0.15.2",
       "org.scalikejdbc" %% "scalikejdbc" % "2.2.7",
       "com.h2database" % "h2" % "1.4.187",
-      "ch.qos.logback" % "logback-classic" % "1.1.3"
+      "ch.qos.logback" % "logback-classic" % "1.1.3",
+      "org.scalaj" %% "scalaj-http" % "1.1.4"
     )
   )
 

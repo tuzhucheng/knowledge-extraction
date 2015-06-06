@@ -7,6 +7,8 @@ import java.util.Calendar
 
 import scalikejdbc._
 
+import CommonEntity._
+
 object TermsImporter extends App {
 
   private[this] implicit val logger = org.log4s.getLogger
@@ -22,12 +24,6 @@ object TermsImporter extends App {
 
   val dateFormat = new SimpleDateFormat("yyyy-MM-dd")
   val formattedDate = dateFormat.format(Calendar.getInstance().getTime())
-
-  case class SearchTerm(id: Long, term: String, search: Boolean, dateAdded: String)
-  object SearchTerm extends SQLSyntaxSupport[SearchTerm] {
-    override val tableName = "terms"
-    def apply(rs: WrappedResultSet) = new SearchTerm(rs.get("id"), rs.get("term"), rs.get("search"), rs.get("date_added"))
-  }
 
   for (line <- Source.fromFile(termsFile).getLines()) {
     SQL("INSERT INTO terms (term, search, date_added) VALUES ({term}, TRUE, {date_added})")
