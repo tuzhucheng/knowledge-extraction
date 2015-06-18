@@ -1,4 +1,4 @@
-package crea.nlp
+package crea.etl
 
 import scala.io.Source
 
