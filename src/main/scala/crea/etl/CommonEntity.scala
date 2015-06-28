@@ -26,9 +26,15 @@ package object CommonEntity {
                                                           rs.get("retrieve_date"))
   }
 
-  case class TermAbstractLink(id: Int, term_id: Int, abstract_id: Int)
+  case class TermAbstractLink(id: Int, termId: Int, abstractId: Int)
   object TermAbstractLink extends SQLSyntaxSupport[TermAbstractLink] {
     override val tableName = "terms_abstracts"
     def apply(rs: WrappedResultSet) = new TermAbstractLink(rs.get("id"), rs.get("term_id"), rs.get("abstract_id"))
+  }
+
+  case class Sentence(id: Int, abstractId: Int, sentenceNum: Int, sentence: String, parseTree: String)
+  object Sentence extends SQLSyntaxSupport[Sentence] {
+    override val tableName = "sentences"
+    def apply(rs: WrappedResultSet) = new Sentence(rs.get("id"), rs.get("abstract_id"), rs.get("sentence_num"), rs.get("sentence"), rs.get("parse_tree"))
   }
 }

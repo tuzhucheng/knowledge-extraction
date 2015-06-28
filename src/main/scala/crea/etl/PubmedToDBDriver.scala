@@ -2,6 +2,8 @@ package crea.etl
 
 import scalikejdbc._
 import scalaj.http.Http
+import epic.preprocess.MLSentenceSegmenter
+import edu.berkeley.nlp.syntax.Trees.PennTreeRenderer
 
 import scala.collection.mutable.ListBuffer
 import scala.xml.Node
@@ -10,6 +12,7 @@ import java.util.Calendar
 import java.text.SimpleDateFormat
 
 import CommonEntity._
+import crea.nlp.{Parse, Trees}
 
 object PubmedToDBDriver {
 
@@ -17,6 +20,8 @@ object PubmedToDBDriver {
   Class.forName("org.h2.Driver")
   ConnectionPool.singleton(DBConnectionString, "creauser", "creauser")
   implicit val session = AutoSession
+
+  val sentenceSplitter = MLSentenceSegmenter.bundled().get
 
   val today = Calendar.getInstance().getTime()
   val dateFormat = new SimpleDateFormat("yyyy-MM-dd")
@@ -27,7 +32,23 @@ object PubmedToDBDriver {
 
   val PUBMED = "pubmed"
 
-  def storeArticleRecord(searchTermId: Int, articleRecord:Node) = {
+  def storeSentences(abstractId: Int, abstractText: String) = {
+    val sentences : IndexedSeq[String] = sentenceSplitter(abstractText).toIndexedSeq
+    for ((sentence, sentenceNum) <- sentences.zipWithIndex) {
+      val parseTree = Trees.fromTree(Parse(sentence))
+      val parseTreeAsStr = PennTreeRenderer.render(parseTree)
+      // TODO: Handle case of article already downloaded, thus avoid parsing sentences again
+      SQL("INSERT IGNORE INTO sentences (abstract_id, sentence_num, sentence, parse_tree) VALUES ({abstract_id}, {sentence_num}, {sentence}, {parse_tree})")
+      .bindByName(
+        'abstract_id -> abstractId,
+        'sentence_num -> sentenceNum,
+        'sentence -> sentence,
+        'parse_tree -> parseTreeAsStr
+      ).map(rs => Sentence(rs)).execute.apply()
+    }
+  }
+
+  def storeArticleRecord(searchTermId: Int, articleRecord: Node) = {
     val medlineCitation = articleRecord \ "MedlineCitation"
     val pmid = (medlineCitation \ "PMID").text.toInt
 
@@ -78,6 +99,9 @@ object PubmedToDBDriver {
       'term_id -> searchTermId,
       'abstract_id -> pmid
     ).map(rs => TermAbstractLink(rs)).execute.apply()
+
+    // Store and parse sentences
+    storeSentences(pmid, abstractText)
   }
 
   def main(args: Array[String]) {

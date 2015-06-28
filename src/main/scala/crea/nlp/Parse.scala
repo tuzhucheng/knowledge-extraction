@@ -7,7 +7,7 @@ object Parse {
 
   private[this] lazy val parser = new Parser
 
-  def apply(sentence : String) : Tree[String] = this.synchronized { 
+  def apply(sentence : String) : Tree[String] = this.synchronized {
     parser.apply(sentence)
   }
 
