@@ -11,9 +11,18 @@ package object CommonEntity {
     def apply(rs: WrappedResultSet) = new SearchTerm(rs.get("id"), rs.get("term"), rs.get("search"), rs.get("date_added"))
   }
 
-  case class ArticleAbstract(id: Long, pubmedJournalId: Long, articleDoi: String, title: String, articleAbstract: String, dateAdded: String)
+  case class ArticleAbstract(id: Int, db: String, publishDate: String, journalTitle: String, journalVol: String, journalIssue: String, authors: String, title: String, articleAbstract: String, retrieveDate: String)
   object ArticleAbstract extends SQLSyntaxSupport[ArticleAbstract] {
     override val tableName = "abstracts"
-    def apply(rs: WrappedResultSet) = new ArticleAbstract(rs.get("id"), rs.get("pubmed_journal_id"), rs.get("article_doi"), rs.get("title"), rs.get("abstract"), rs.get("date_added"))
+    def apply(rs: WrappedResultSet) = new ArticleAbstract(rs.get("id"),
+                                                          rs.get("db"),
+                                                          rs.get("pub_date"),
+                                                          rs.get("journal_title"),
+                                                          rs.get("journal_vol"),
+                                                          rs.get("journal_issue"),
+                                                          rs.get("authors"),
+                                                          rs.get("title"),
+                                                          rs.get("abstract"),
+                                                          rs.get("retrieve_date"))
   }
 }
