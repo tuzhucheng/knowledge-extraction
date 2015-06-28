@@ -27,7 +27,7 @@ object PubmedToDBDriver {
 
   val PUBMED = "pubmed"
 
-  def storeArticleRecord(articleRecord:Node) = {
+  def storeArticleRecord(searchTermId: Int, articleRecord:Node) = {
     val medlineCitation = articleRecord \ "MedlineCitation"
     val pmid = (medlineCitation \ "PMID").text.toInt
 
@@ -71,6 +71,13 @@ object PubmedToDBDriver {
       'abstract -> abstractText,
       'retrieve_date -> retrieveDateStr
     ).map(rs => ArticleAbstract(rs)).execute.apply()
+
+    // Store term used to find article in terms_abstracts table
+    SQL("INSERT IGNORE INTO terms_abstracts (term_id, abstract_id) VALUES ({term_id}, {abstract_id})")
+    .bindByName(
+      'term_id -> searchTermId,
+      'abstract_id -> pmid
+    ).map(rs => TermAbstractLink(rs)).execute.apply()
   }
 
   def main(args: Array[String]) {
@@ -81,6 +88,7 @@ object PubmedToDBDriver {
     for (searchTerm <- searchTerms) {
       if (searchTerm.search) {
         val term = searchTerm.term
+        val searchTermId = searchTerm.id
 
         // Get article ids for each search term and put them up on the history server
         val searchRes = Http(BaseNCBIEUtilsSearchURL).param("db", "pubmed")
@@ -112,7 +120,7 @@ object PubmedToDBDriver {
           val articleRecordResBody = scala.xml.XML.loadString(articleRecordRes.body)
           val articleRecords = (articleRecordResBody \ "PubmedArticle").toList
           for (articleRecord <- articleRecords) {
-              storeArticleRecord(articleRecord)
+              storeArticleRecord(searchTermId, articleRecord)
           }
           retStart += retMax
           Thread sleep 1000

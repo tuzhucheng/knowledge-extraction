@@ -5,7 +5,7 @@ import scalikejdbc._
 package object CommonEntity {
   val DBConnectionString = "jdbc:mysql://localhost:3306/relation_extraction"
 
-  case class SearchTerm(id: Long, term: String, search: Boolean, dateAdded: String)
+  case class SearchTerm(id: Int, term: String, search: Boolean, dateAdded: String)
   object SearchTerm extends SQLSyntaxSupport[SearchTerm] {
     override val tableName = "terms"
     def apply(rs: WrappedResultSet) = new SearchTerm(rs.get("id"), rs.get("term"), rs.get("search"), rs.get("date_added"))
@@ -24,5 +24,11 @@ package object CommonEntity {
                                                           rs.get("title"),
                                                           rs.get("abstract"),
                                                           rs.get("retrieve_date"))
+  }
+
+  case class TermAbstractLink(id: Int, term_id: Int, abstract_id: Int)
+  object TermAbstractLink extends SQLSyntaxSupport[TermAbstractLink] {
+    override val tableName = "terms_abstracts"
+    def apply(rs: WrappedResultSet) = new TermAbstractLink(rs.get("id"), rs.get("term_id"), rs.get("abstract_id"))
   }
 }

@@ -27,7 +27,7 @@ CREATE TABLE abstracts (id INT NOT NULL PRIMARY KEY, # UID of article
                         abstract TEXT,
                         retrieve_date DATE);         # time retrieved
 
-CREATE TABLE terms_abstracts (ID INT NOT NULL PRIMARY KEY,
+CREATE TABLE terms_abstracts (id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
                               term_id INT,
                               abstract_id INT,
                               FOREIGN KEY (term_id)
