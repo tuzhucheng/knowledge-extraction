@@ -37,4 +37,10 @@ package object CommonEntity {
     override val tableName = "sentences"
     def apply(rs: WrappedResultSet) = new Sentence(rs.get("id"), rs.get("abstract_id"), rs.get("sentence_num"), rs.get("sentence"), rs.get("parse_tree"))
   }
+
+  case class Relation(id: Int, abstractId: Int, sentenceId: Int, subject: String, predicate: String, obj: String, extractDate: String)
+  object Relation extends SQLSyntaxSupport[Sentence] {
+    override val tableName = "relations"
+    def apply(rs: WrappedResultSet) = new Relation(rs.get("id"), rs.get("abstract_id"), rs.get("sentence_id"), rs.get("subject"), rs.get("predicate"), rs.get("object"), rs.get("extract_date"))
+  }
 }

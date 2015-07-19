@@ -5,6 +5,12 @@ import scalaj.http.Http
 import epic.preprocess.MLSentenceSegmenter
 import edu.berkeley.nlp.syntax.Trees.PennTreeRenderer
 
+import scalaz._
+import scalaz.concurrent._
+import scala.concurrent.duration._
+import scalaz.stream._
+import Scalaz._
+
 import scala.collection.mutable.ListBuffer
 import scala.xml.Node
 
@@ -12,7 +18,7 @@ import java.util.Calendar
 import java.text.SimpleDateFormat
 
 import CommonEntity._
-import crea.nlp.{Parse, Trees}
+import crea.nlp.{Parse, Trees, Compile}
 
 object PubmedToDBDriver {
 
@@ -35,7 +41,8 @@ object PubmedToDBDriver {
   def storeSentences(abstractId: Int, abstractText: String) = {
     val sentences : IndexedSeq[String] = sentenceSplitter(abstractText).toIndexedSeq
     for ((sentence, sentenceNum) <- sentences.zipWithIndex) {
-      val parseTree = Trees.fromTree(Parse(sentence))
+      val parsed = Parse(sentence)
+      val parseTree = Trees.fromTree(parsed)
       val parseTreeAsStr = PennTreeRenderer.render(parseTree)
       // TODO: Handle case of article already downloaded, thus avoid parsing sentences again
       SQL("INSERT IGNORE INTO sentences (abstract_id, sentence_num, sentence, parse_tree) VALUES ({abstract_id}, {sentence_num}, {sentence}, {parse_tree})")
@@ -45,6 +52,36 @@ object PubmedToDBDriver {
         'sentence -> sentence,
         'parse_tree -> parseTreeAsStr
       ).map(rs => Sentence(rs)).execute.apply()
+
+      val timeout = 3 minutes
+      val res = Task(Compile(parsed)).timed(timeout).attemptRun
+      res match {
+
+        case \/-(\/-(relations)) =>
+
+          relations.filter(_.args.length == 2)
+            .map { relation =>
+
+              val predicate = relation.literal.id
+              val subject = relation.args.head.id
+              val obj = relation.args.last.id
+
+              println("Extracted!")
+              SQL("INSERT IGNORE INTO relations (abstract_id, sentence_id, subject, predicate, object, extract_date) VALUES ({abstract_id}, {sentence_id}, {subject}, {predicate}, {object}, {extract_date})")
+              .bindByName(
+                'abstract_id -> abstractId,
+                'sentence_id -> 1,  // TODO Hack - use real ID
+                'subject -> subject,
+                'predicate -> predicate,
+                'object -> obj,
+                'extract_date -> retrieveDateStr
+              ).map(rs => Relation(rs)).execute.apply()
+
+            }
+
+        case _ =>
+          println("Failed to extract!!!")
+      }
     }
   }
 
@@ -119,7 +156,7 @@ object PubmedToDBDriver {
                                                      .param("term", term)
                                                      .param("datetype", "pdat")
                                                      .param("mindate", "2014/01/01")
-                                                     .param("maxdate", "2014/01/31")
+                                                     .param("maxdate", "2014/01/03")
                                                      .param("usehistory", "y")
                                                      .asString
 
