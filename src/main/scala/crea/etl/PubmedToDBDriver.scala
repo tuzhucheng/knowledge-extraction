@@ -19,13 +19,12 @@ import java.text.SimpleDateFormat
 
 import CommonEntity._
 import crea.nlp.{Parse, Trees, Compile}
+import crea.utils.Database
 
 object PubmedToDBDriver {
 
   private[this] implicit val logger = org.log4s.getLogger
-  Class.forName("org.h2.Driver")
-  ConnectionPool.singleton(DBConnectionString, "creauser", "creauser")
-  implicit val session = AutoSession
+  implicit val session = Database.connect()
 
   val sentenceSplitter = MLSentenceSegmenter.bundled().get
 

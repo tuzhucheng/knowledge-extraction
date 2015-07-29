@@ -3,8 +3,6 @@ package crea.etl
 import scalikejdbc._
 
 package object CommonEntity {
-  val DBConnectionString = "jdbc:mysql://localhost:3306/relation_extraction"
-
   case class SearchTerm(id: Int, term: String, search: Boolean, dateAdded: String)
   object SearchTerm extends SQLSyntaxSupport[SearchTerm] {
     override val tableName = "terms"

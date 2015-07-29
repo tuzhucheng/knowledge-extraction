@@ -11,3 +11,4 @@ data/*.xml
 *.toc
 *.out
 twitter4j.properties
+src/main/resources/application.conf
