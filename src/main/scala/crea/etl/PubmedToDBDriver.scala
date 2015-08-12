@@ -65,11 +65,10 @@ object PubmedToDBDriver {
               val subject = relation.args.head.id
               val obj = relation.args.last.id
 
-              println("Extracted!")
               SQL("INSERT IGNORE INTO relations (abstract_id, sentence_id, subject, predicate, object, extract_date) VALUES ({abstract_id}, {sentence_id}, {subject}, {predicate}, {object}, {extract_date})")
               .bindByName(
                 'abstract_id -> abstractId,
-                'sentence_id -> 1,  // TODO Hack - use real ID
+                'sentence_id -> sentenceNum,
                 'subject -> subject,
                 'predicate -> predicate,
                 'object -> obj,
@@ -79,7 +78,7 @@ object PubmedToDBDriver {
             }
 
         case _ =>
-          println("Failed to extract!!!")
+          logger.info("Failed to extract: " + sentence)
       }
     }
   }
@@ -155,7 +154,7 @@ object PubmedToDBDriver {
                                                      .param("term", term)
                                                      .param("datetype", "pdat")
                                                      .param("mindate", "2014/01/01")
-                                                     .param("maxdate", "2014/01/03")
+                                                     .param("maxdate", "2014/04/30")
                                                      .param("usehistory", "y")
                                                      .asString
 
@@ -164,7 +163,7 @@ object PubmedToDBDriver {
         val webEnv = (searchResBody \ "WebEnv").text
         val queryKey = (searchResBody \ "QueryKey").text
 
-        Thread sleep 1000
+        Thread sleep 2000
 
         // Get all article records in batches of 500
         var (retStart, retMax) = (0, 500)
@@ -183,7 +182,7 @@ object PubmedToDBDriver {
               storeArticleRecord(searchTermId, articleRecord)
           }
           retStart += retMax
-          Thread sleep 1000
+          Thread sleep 2000
         }
       }
     }
