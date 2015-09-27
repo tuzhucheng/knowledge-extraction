@@ -44,13 +44,13 @@ object PubmedToDBDriver {
       val parseTree = Trees.fromTree(parsed)
       val parseTreeAsStr = PennTreeRenderer.render(parseTree)
       // TODO: Handle case of article already downloaded, thus avoid parsing sentences again
-      SQL("INSERT IGNORE INTO sentences (abstract_id, sentence_num, sentence, parse_tree) VALUES ({abstract_id}, {sentence_num}, {sentence}, {parse_tree})")
+      val sentenceId = SQL("INSERT IGNORE INTO sentences (abstract_id, sentence_num, sentence, parse_tree) VALUES ({abstract_id}, {sentence_num}, {sentence}, {parse_tree})")
       .bindByName(
         'abstract_id -> abstractId,
         'sentence_num -> sentenceNum,
         'sentence -> sentence,
         'parse_tree -> parseTreeAsStr
-      ).map(rs => Sentence(rs)).execute.apply()
+      ).map(rs => Sentence(rs)).updateAndReturnGeneratedKey(1).apply()
 
       val timeout = 3 minutes
       val res = Task(Compile(parsed)).timed(timeout).attemptRun
@@ -68,7 +68,7 @@ object PubmedToDBDriver {
               SQL("INSERT IGNORE INTO relations (abstract_id, sentence_id, subject, predicate, object, extract_date) VALUES ({abstract_id}, {sentence_id}, {subject}, {predicate}, {object}, {extract_date})")
               .bindByName(
                 'abstract_id -> abstractId,
-                'sentence_id -> sentenceNum,
+                'sentence_id -> sentenceId,
                 'subject -> subject,
                 'predicate -> predicate,
                 'object -> obj,
